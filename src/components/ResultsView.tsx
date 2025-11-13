@@ -3,15 +3,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useLineBalancingStore } from '@/store/lineBalancingStore';
-import { BarChart3, Clock, Target, TrendingUp, RotateCcw } from 'lucide-react';
+import { BarChart3, Clock, Target, TrendingUp, RotateCcw, Network } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { PrecedenceDiagram } from '@/components/PrecedenceDiagram';
 
 interface ResultsViewProps {
   onReset: () => void;
 }
 
 export const ResultsView = ({ onReset }: ResultsViewProps) => {
-  const { results, assignmentSteps, stations, projectConfig } = useLineBalancingStore();
+  const { results, assignmentSteps, stations, projectConfig, tasks } = useLineBalancingStore();
 
   if (!results || !projectConfig) return null;
 
@@ -45,6 +46,22 @@ export const ResultsView = ({ onReset }: ResultsViewProps) => {
             </Button>
           </div>
         </CardHeader>
+      </Card>
+
+      {/* Precedence Diagram */}
+      <Card className="shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5 border-b">
+          <div className="flex items-center gap-2">
+            <Network className="h-5 w-5 text-primary" />
+            <CardTitle>Diagrama de Precedencia</CardTitle>
+          </div>
+          <CardDescription>
+            Visualización gráfica de las relaciones de precedencia entre tareas. Los colores indican la estación asignada.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <PrecedenceDiagram tasks={tasks} stations={stations} />
+        </CardContent>
       </Card>
 
       {/* Key Metrics */}
