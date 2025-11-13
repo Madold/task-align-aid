@@ -47,7 +47,7 @@ interface LineBalancingState {
   
   setProjectConfig: (config: ProjectConfig) => void;
   setTasks: (tasks: Task[]) => void;
-  calculateBalancing: () => void;
+  calculateBalancing: () => boolean;
   reset: () => void;
 }
 
@@ -64,7 +64,7 @@ export const useLineBalancingStore = create<LineBalancingState>((set, get) => ({
 
   calculateBalancing: () => {
     const { projectConfig, tasks } = get();
-    if (!projectConfig || tasks.length === 0) return;
+    if (!projectConfig || tasks.length === 0) return false;
 
     // Step 1: Calculate total task time
     const totalTaskTime = tasks.reduce((sum, task) => sum + task.time, 0);
@@ -127,12 +127,64 @@ export const useLineBalancingStore = create<LineBalancingState>((set, get) => ({
     };
 
     // Assign tasks
+    let iterationsSinceLastAssignment = 0;
+    const MAX_ITERATIONS_WITHOUT_ASSIGNMENT = 50; // Safety limit to detect infinite loops
+    
     while (assignedTasks.size < tasks.length) {
       const availableTasks = getAvailableTasks();
       
       if (availableTasks.length === 0) {
+        // No tasks can be assigned in this iteration
+        iterationsSinceLastAssignment++;
+        
+        // If we've gone too many iterations without assigning any task, we have a problem
+        if (iterationsSinceLastAssignment >= MAX_ITERATIONS_WITHOUT_ASSIGNMENT) {
+          const unassignedTasks = tasks.filter(t => !assignedTasks.has(t.id));
+          
+          // Find problematic tasks
+          const problematicTasks = unassignedTasks.map(task => {
+            const invalidPrec = task.precedences.filter(precId => 
+              !tasks.some(t => t.id === precId)
+            );
+            const unmetPrec = task.precedences.filter(precId => 
+              !assignedTasks.has(precId) && tasks.some(t => t.id === precId)
+            );
+            const taskTooBig = task.time > cycleTime;
+            return {
+              task,
+              invalidPrec,
+              unmetPrec,
+              taskTooBig
+            };
+          });
+          
+          let errorMsg = 'Error: No se pueden asignar todas las tareas. Problemas detectados:\n\n';
+          problematicTasks.forEach(({ task, invalidPrec, unmetPrec, taskTooBig }) => {
+            errorMsg += `Tarea ${task.id} (${task.name}):\n`;
+            if (invalidPrec.length > 0) {
+              errorMsg += `  ❌ Referencias precedencias inexistentes: ${invalidPrec.join(', ')}\n`;
+            }
+            if (unmetPrec.length > 0) {
+              errorMsg += `  ⏳ Precedencias pendientes: ${unmetPrec.join(', ')}\n`;
+            }
+            if (taskTooBig) {
+              errorMsg += `  ⚠️ Tiempo (${task.time}s) excede el ciclo (${cycleTime.toFixed(2)}s)\n`;
+            }
+          });
+          errorMsg += '\n📋 Verifica que:\n';
+          errorMsg += '1. Todas las precedencias referencian tareas existentes\n';
+          errorMsg += '2. No existan dependencias circulares\n';
+          errorMsg += '3. Cada tarea cabe dentro del tiempo de ciclo\n';
+          errorMsg += '4. El grafo de precedencias sea resoluble';
+          
+          alert(errorMsg);
+          return false; // Exit the function without saving invalid results
+        }
+        
         // Close current station and open new one
-        stations.push({ ...currentStation });
+        if (currentStation.tasks.length > 0) {
+          stations.push({ ...currentStation });
+        }
         currentStation = {
           id: stations.length + 1,
           tasks: [],
@@ -142,6 +194,9 @@ export const useLineBalancingStore = create<LineBalancingState>((set, get) => ({
         continue;
       }
 
+      // Reset counter when we successfully find and assign available tasks
+      iterationsSinceLastAssignment = 0;
+      
       const { task, justification } = selectTask(availableTasks);
       
       // Assign task to station
@@ -190,6 +245,8 @@ export const useLineBalancingStore = create<LineBalancingState>((set, get) => ({
         efficiencyClassification
       }
     });
+    
+    return true; // Success
   },
 
   reset: () => set({

@@ -60,6 +60,21 @@ export const TaskListForm = ({ onComplete, onBack }: TaskListFormProps) => {
     setTasksLocal(tasks.filter(t => t.id !== id));
   };
 
+  const loadExampleTasks = () => {
+    const exampleTasks: Task[] = [
+      { id: 1, name: 'Cortar material', time: 45, precedences: [] },
+      { id: 2, name: 'Lijar piezas', time: 30, precedences: [1] },
+      { id: 3, name: 'Perforar', time: 25, precedences: [1] },
+      { id: 4, name: 'Pintar base', time: 40, precedences: [2, 3] },
+      { id: 5, name: 'Ensamblar estructura', time: 50, precedences: [4] },
+      { id: 6, name: 'Instalar componentes', time: 35, precedences: [5] },
+      { id: 7, name: 'Inspección calidad', time: 20, precedences: [6] },
+      { id: 8, name: 'Empaquetado', time: 25, precedences: [7] }
+    ];
+    setTasksLocal(exampleTasks);
+    setNextId(9);
+  };
+
   const handleComplete = () => {
     if (tasks.length === 0) return;
     setTasks(tasks);
@@ -69,8 +84,20 @@ export const TaskListForm = ({ onComplete, onBack }: TaskListFormProps) => {
   return (
     <Card className="shadow-lg border-primary/20">
       <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5 border-b">
-        <CardTitle className="text-2xl">Lista de Tareas</CardTitle>
-        <CardDescription>Defina las tareas, tiempos y precedencias</CardDescription>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-2xl">Lista de Tareas</CardTitle>
+            <CardDescription>Defina las tareas, tiempos y precedencias</CardDescription>
+          </div>
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            onClick={loadExampleTasks}
+            disabled={tasks.length > 0}
+          >
+            📋 Cargar Ejemplo
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="pt-6 space-y-6">
         <Form {...form}>

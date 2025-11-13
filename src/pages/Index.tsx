@@ -17,8 +17,11 @@ const Index = () => {
   };
 
   const handleTasksComplete = () => {
-    calculateBalancing();
-    setCurrentStep('results');
+    const success = calculateBalancing();
+    if (success) {
+      setCurrentStep('results');
+    }
+    // Si no fue exitoso, se queda en la pantalla de tareas
   };
 
   const handleReset = () => {
