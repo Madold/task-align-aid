@@ -211,7 +211,7 @@ export const TaskListForm = ({ onComplete, onBack }: TaskListFormProps) => {
             className="flex-1 shadow-md"
             size="lg"
           >
-            Calcular Balanceo
+            Continuar a Reglas de Asignación
           </Button>
         </div>
       </CardContent>

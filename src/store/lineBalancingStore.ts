@@ -13,6 +13,12 @@ export interface ProjectConfig {
   requiredProductionPerDay: number;
 }
 
+export type SecondaryRule = 'mostFollowingTasks' | 'longestTime';
+
+export interface AssignmentRulesConfig {
+  enabledRules: SecondaryRule[];
+}
+
 export interface Station {
   id: number;
   tasks: Task[];
@@ -41,12 +47,14 @@ export interface CalculatedResults {
 interface LineBalancingState {
   projectConfig: ProjectConfig | null;
   tasks: Task[];
+  assignmentRulesConfig: AssignmentRulesConfig;
   assignmentSteps: AssignmentStep[];
   stations: Station[];
   results: CalculatedResults | null;
   
   setProjectConfig: (config: ProjectConfig) => void;
   setTasks: (tasks: Task[]) => void;
+  setAssignmentRulesConfig: (config: AssignmentRulesConfig) => void;
   calculateBalancing: () => boolean;
   reset: () => void;
 }
@@ -54,6 +62,9 @@ interface LineBalancingState {
 export const useLineBalancingStore = create<LineBalancingState>((set, get) => ({
   projectConfig: null,
   tasks: [],
+  assignmentRulesConfig: {
+    enabledRules: ['mostFollowingTasks', 'longestTime'] // Por defecto ambas activas
+  },
   assignmentSteps: [],
   stations: [],
   results: null,
@@ -61,6 +72,8 @@ export const useLineBalancingStore = create<LineBalancingState>((set, get) => ({
   setProjectConfig: (config) => set({ projectConfig: config }),
   
   setTasks: (tasks) => set({ tasks }),
+  
+  setAssignmentRulesConfig: (config) => set({ assignmentRulesConfig: config }),
 
   calculateBalancing: () => {
     const { projectConfig, tasks } = get();
@@ -105,25 +118,48 @@ export const useLineBalancingStore = create<LineBalancingState>((set, get) => ({
         return { task: availableTasks[0], justification: 'Única tarea disponible' };
       }
 
-      // Rule 1: Most following tasks
-      const maxFollowing = Math.max(...availableTasks.map(t => countFollowingTasks(t.id)));
-      let candidates = availableTasks.filter(t => countFollowingTasks(t.id) === maxFollowing);
-      
-      if (candidates.length === 1) {
-        return { task: candidates[0], justification: `Mayor número de tareas siguientes (${maxFollowing})` };
+      const { assignmentRulesConfig } = get();
+      const enabledRules = assignmentRulesConfig.enabledRules;
+      let candidates = [...availableTasks];
+      const appliedRules: string[] = [];
+
+      // Aplicar reglas en el orden configurado
+      for (const rule of enabledRules) {
+        if (candidates.length === 1) break;
+
+        if (rule === 'mostFollowingTasks') {
+          const maxFollowing = Math.max(...candidates.map(t => countFollowingTasks(t.id)));
+          const filtered = candidates.filter(t => countFollowingTasks(t.id) === maxFollowing);
+          
+          if (filtered.length < candidates.length) {
+            appliedRules.push(`Mayor número de tareas siguientes (${maxFollowing})`);
+            candidates = filtered;
+          }
+        } else if (rule === 'longestTime') {
+          const maxTime = Math.max(...candidates.map(t => t.time));
+          const filtered = candidates.filter(t => t.time === maxTime);
+          
+          if (filtered.length < candidates.length) {
+            appliedRules.push(`Mayor tiempo de ejecución (${maxTime}s)`);
+            candidates = filtered;
+          }
+        }
       }
 
-      // Rule 2: Longest time
-      const maxTime = Math.max(...candidates.map(t => t.time));
-      candidates = candidates.filter(t => t.time === maxTime);
-
+      // Si después de aplicar todas las reglas hay un solo candidato
       if (candidates.length === 1) {
-        return { task: candidates[0], justification: `Mayor tiempo de ejecución (${maxTime}s) tras empate en tareas siguientes` };
+        const justification = appliedRules.length > 0 
+          ? appliedRules.join(' → ')
+          : 'Única tarea disponible tras aplicar reglas';
+        return { task: candidates[0], justification };
       }
 
-      // Random selection
+      // Random selection si persiste empate
       const selectedTask = candidates[Math.floor(Math.random() * candidates.length)];
-      return { task: selectedTask, justification: 'Selección aleatoria tras empate múltiple' };
+      const justification = appliedRules.length > 0
+        ? `${appliedRules.join(' → ')} → Selección aleatoria (empate entre ${candidates.length} tareas)`
+        : `Selección aleatoria entre ${candidates.length} tareas`;
+      return { task: selectedTask, justification };
     };
 
     // Assign tasks
@@ -252,6 +288,9 @@ export const useLineBalancingStore = create<LineBalancingState>((set, get) => ({
   reset: () => set({
     projectConfig: null,
     tasks: [],
+    assignmentRulesConfig: {
+      enabledRules: ['mostFollowingTasks', 'longestTime']
+    },
     assignmentSteps: [],
     stations: [],
     results: null

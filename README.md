@@ -1,4 +1,47 @@
-# Welcome to your Lovable project
+# Sistema de Balanceo de Línea - Task Align Aid
+
+Sistema web interactivo para el balanceo de líneas de producción utilizando metodología de 6 pasos con algoritmo heurístico.
+
+## 📋 Descripción del Proyecto
+
+Aplicación completa que implementa la metodología de balanceo de línea de producción, permitiendo:
+- Configuración de parámetros de producción
+- Definición de tareas con precedencias
+- **Selección configurable de reglas de asignación secundarias**
+- Visualización de diagrama de precedencia
+- Cálculo automático de estaciones y eficiencia
+- Análisis detallado del proceso de asignación
+
+## ✨ Características Principales
+
+### 1. Diagrama de Precedencia Interactivo
+- Visualización gráfica de la red del proyecto
+- Nodos coloreados por estación asignada
+- Muestra tiempos y relaciones de dependencia
+
+### 2. Configuración de Reglas de Asignación
+- **Reglas Obligatorias** (siempre activas):
+  - Precedencia de tareas
+  - Respeto del tiempo de ciclo
+- **Reglas Secundarias** (configurables por el usuario):
+  - ☑️ Mayor número de tareas siguientes
+  - ☑️ Mayor tiempo de ejecución
+  - Selección aleatoria en caso de empate
+
+### 3. Análisis Completo
+- Tiempo de ciclo calculado automáticamente
+- Número teórico y real de estaciones
+- Eficiencia con clasificación (Insatisfactoria/Satisfactoria/Sobresaliente)
+- Justificación detallada de cada asignación
+
+## 🎯 Cumplimiento de Requisitos
+
+✅ Requisito 1: Diagrama de precedencia con interfaz gráfica  
+✅ Requisito 2: Cálculo de tiempo de ciclo (C)  
+✅ Requisito 3: Número mínimo teórico de estaciones (W)  
+✅ Requisito 4: **Selección configurable de reglas secundarias**  
+✅ Requisito 5: Asignación de tareas a estaciones  
+✅ Requisito 6: Cálculo y clasificación de eficiencia  
 
 ## Project info
 

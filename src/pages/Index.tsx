@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { ProjectConfigForm } from '@/components/ProjectConfigForm';
 import { TaskListForm } from '@/components/TaskListForm';
+import { AssignmentRulesForm } from '@/components/AssignmentRulesForm';
 import { ResultsView } from '@/components/ResultsView';
+import { ProgressStepper } from '@/components/ProgressStepper';
 import { useLineBalancingStore } from '@/store/lineBalancingStore';
 import { Factory } from 'lucide-react';
 
-type Step = 'config' | 'tasks' | 'results';
+type Step = 'config' | 'tasks' | 'rules' | 'results';
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState<Step>('config');
@@ -17,11 +19,15 @@ const Index = () => {
   };
 
   const handleTasksComplete = () => {
+    setCurrentStep('rules');
+  };
+
+  const handleRulesComplete = () => {
     const success = calculateBalancing();
     if (success) {
       setCurrentStep('results');
     }
-    // Si no fue exitoso, se queda en la pantalla de tareas
+    // Si no fue exitoso, se queda en la pantalla de reglas
   };
 
   const handleReset = () => {
@@ -29,8 +35,12 @@ const Index = () => {
     setCurrentStep('config');
   };
 
-  const handleBack = () => {
+  const handleBackFromTasks = () => {
     setCurrentStep('config');
+  };
+
+  const handleBackFromRules = () => {
+    setCurrentStep('tasks');
   };
 
   return (
@@ -50,6 +60,9 @@ const Index = () => {
         </div>
       </header>
 
+      {/* Progress Stepper */}
+      {currentStep !== 'results' && <ProgressStepper currentStep={currentStep} />}
+
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 max-w-7xl">
         {currentStep === 'config' && (
@@ -60,7 +73,13 @@ const Index = () => {
         
         {currentStep === 'tasks' && (
           <div className="max-w-4xl mx-auto">
-            <TaskListForm onComplete={handleTasksComplete} onBack={handleBack} />
+            <TaskListForm onComplete={handleTasksComplete} onBack={handleBackFromTasks} />
+          </div>
+        )}
+        
+        {currentStep === 'rules' && (
+          <div className="max-w-3xl mx-auto">
+            <AssignmentRulesForm onComplete={handleRulesComplete} onBack={handleBackFromRules} />
           </div>
         )}
         
